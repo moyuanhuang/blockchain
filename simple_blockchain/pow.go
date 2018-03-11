@@ -37,7 +37,7 @@ func (pow *ProofofWork) prepareData(nonce int) []byte {
 
     return data
 }
-func (pow *ProofofWork) Run() (nonce uint, hash [32]byte) {
+func (pow *ProofofWork) Run() (nonce int, hash [32]byte) {
     fmt.Printf("Mining a new block...\n")
     var hashInt big.Int
 
@@ -56,4 +56,14 @@ func (pow *ProofofWork) Run() (nonce uint, hash [32]byte) {
         log.Panic("Failed to provide POW.\n")
     }
     return
+}
+
+
+func (pow *ProofofWork) Validate() bool {
+    var hashInt big.Int
+    data := pow.prepareData(pow.block.Nonce)
+    hash := sha256.Sum256(data)
+    hashInt.SetBytes(hash[:])
+
+    return hashInt.Cmp(pow.target) == -1
 }

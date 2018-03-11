@@ -12,7 +12,7 @@ type Block struct {
     Hash []byte
     Data []byte
     Timestamp int64
-    Nonce uint
+    Nonce int
 }
 
 func NewBlock(data string, prevHash []byte) *Block {
@@ -46,4 +46,13 @@ func (b *Block) Serialize() []byte {
     handleError(err)
 
     return result.Bytes()
+}
+
+func DeserializeBlock(data []byte) *Block {
+    var block Block
+    dec := gob.NewDecoder(bytes.NewReader(data))
+
+    err := dec.Decode(&block)
+    handleError(err)
+    return &block
 }

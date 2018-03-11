@@ -2,8 +2,8 @@ package main
 
 import (
     "fmt"
+
     "github.com/boltdb/bolt"
-    "log"
 )
 
 const dbFile = "blockchain.db"
@@ -16,6 +16,11 @@ type BlockChain struct {
     db *bolt.DB
 }
 
+type BlockChainIterator struct {
+    curHash []byte
+    db *bolt.DB
+}
+
 func NewBlockChain() *BlockChain {
     db, err := bolt.Open(dbFile, 0600, nil)
     handleError(err)
@@ -25,7 +30,7 @@ func NewBlockChain() *BlockChain {
     err = db.Update(func(tx *bolt.Tx) error {
         bucket := tx.Bucket([]byte(BlocksBucket))
         if bucket == nil {
-            fmt.Printf("Creating Genesis block...\n")
+            fmt.Printf("No existing block chain, creating a new one with Genesis block...\n")
             gb := NewGenesisBlock()
 
             bucket, err = tx.CreateBucket([]byte(BlocksBucket))
@@ -37,7 +42,7 @@ func NewBlockChain() *BlockChain {
             err = bucket.Put(gb.Hash, gb.Serialize())
             handleError(err)
         } else {
-            log.Panic("Genesis Block already exist!")
+            lastHash = bucket.Get(lastHashKey)
         }
         return nil
     })
@@ -71,4 +76,43 @@ func (bc *BlockChain) AddBlock(data string) {
         return nil
     })
 
+}
+
+func (bc *BlockChain) Iterator() *BlockChainIterator {
+    return &BlockChainIterator{bc.lastHash, bc.db}
+}
+
+func (it *BlockChainIterator) Next() *Block {
+    var block *Block
+    block = nil
+
+    err := it.db.View(func(tx *bolt.Tx) error {
+        bucket := tx.Bucket([]byte(BlocksBucket))
+        data := bucket.Get(it.curHash)
+        if data != nil {
+            block = DeserializeBlock(data)
+        }
+
+        return nil
+    })
+    handleError(err)
+
+    if block != nil {
+        it.curHash = block.PrevHash
+    }
+
+    return block
+}
+
+func (bc *BlockChain) PrintChain() {
+    it := bc.Iterator()
+
+    for {
+        block := it.Next()
+        if block == nil {
+            break
+        }
+
+        fmt.Printf("%s\n%x\n%x\n\n", block.Data, block.Hash, block.PrevHash)
+    }
 }

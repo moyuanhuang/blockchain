@@ -1,12 +1,9 @@
 package main
 
-import (
-
-)
-
 func main() {
-    blockChain := NewBlockChain()
+    blockchain := NewBlockChain()
+    defer blockchain.db.Close()
 
-    blockChain.AddBlock("This is the first block")
-    blockChain.AddBlock("This is the second block")
+    cli := CLI{blockchain}
+    cli.Run()
 }
