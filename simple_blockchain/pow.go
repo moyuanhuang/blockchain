@@ -29,7 +29,7 @@ func NewProofOfWork(block *Block) *ProofofWork {
 func (pow *ProofofWork) prepareData(nonce int) []byte {
     data := bytes.Join([][]byte{
         pow.block.PrevHash,
-        pow.block.Data,
+        pow.block.HashTransactions(),
         IntToHex(pow.block.Timestamp),
         IntToHex(int64(TargetBits)),
         IntToHex(int64(nonce)),
@@ -37,6 +37,7 @@ func (pow *ProofofWork) prepareData(nonce int) []byte {
 
     return data
 }
+
 func (pow *ProofofWork) Run() (nonce int, hash [32]byte) {
     fmt.Printf("Mining a new block...\n")
     var hashInt big.Int
@@ -57,7 +58,6 @@ func (pow *ProofofWork) Run() (nonce int, hash [32]byte) {
     }
     return
 }
-
 
 func (pow *ProofofWork) Validate() bool {
     var hashInt big.Int
